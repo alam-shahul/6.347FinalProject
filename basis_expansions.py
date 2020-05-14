@@ -4,7 +4,7 @@ from scipy.signal import stft, istft
 from scipy.fftpack import dct, idct
 import pywt
 
-def generate_gaussian_basis(dimensionality=100, num_frame_vectors=200):
+def generate_gaussian_basis(dimensionality=100):
     basis = np.random.normal(size=(dimensionality, dimensionality))
     
     return basis
@@ -13,17 +13,6 @@ def generate_dft_basis(dimensionality=100):
     basis = dft(dimensionality)
 
     return basis
-
-def generate_dft_dropout_frame(dimensionality=100, num_frame_vectors=200):
-    """
-    Generate a dft_dropout frame using the DFT matrix.
-    """
-
-    random_indices = np.random.randint(num_frame_vectors, size=dimensionality)
-    frame = dft(num_frame_vectors)[random_indices]
-
-    return frame
-
 
 def multiplicative_basis_analysis(signal, basis):
     analysis_coefficients = np.matmul(signal, basis)
@@ -45,20 +34,29 @@ def stft_basis_synthesis(analysis_coefficients):
     return reconstructed_signal
 
 def debauchies_1D_basis_analysis(signal):
-    (cA, cD) = pywt.dwt(signal, 'db2', 'smooth')
-    return np.array((cA, cD))
+    analysis_coefficients = pywt.wavedecn(signal, 'db2', 'smooth', level=4)
+    array, coeff_slices = pywt.coeffs_to_array(analysis_coefficients)
 
-def debauchies_1D_basis_synthesis(frame_coefficients):
-    approximation_coefficients, detail_coefficients = frame_coefficients[0], frame_coefficients[1] 
-    signal = pywt.idwt(approximation_coefficients, detail_coefficients, 'db2', 'smooth')
+    return array, coeff_slices
+
+def debauchies_1D_basis_synthesis(analysis_coefficients):
+    array, coeff_slices = analysis_coefficients
+    analysis_coefficients = pywt.array_to_coeffs(array, coeff_slices, output_format='wavedecn')
+
+    signal = pywt.waverecn(analysis_coefficients, 'db2', 'smooth')
     return signal
 
 def debauchies_2D_basis_analysis(signal):
-    (cA, cD) = pywt.dwt2(signal, 'db2', 'smooth')
-    return np.array((cA, cD))
+    analysis_coefficients = pywt.wavedec2(signal, 'db2', 'smooth', level=4)
+    array, coeff_slices = pywt.coeffs_to_array(analysis_coefficients)
 
-def debauchies_2D_basis_synthesis(basis_coefficients):
-    signal = pywt.idwt2(basis_coefficients, 'db2', 'smooth')
+    return array, coeff_slices
+
+def debauchies_2D_basis_synthesis(analysis_coefficients):
+    array, coeff_slices = analysis_coefficients
+    analysis_coefficients = pywt.array_to_coeffs(array, coeff_slices, output_format='wavedec2')
+
+    signal = pywt.waverec2(analysis_coefficients, 'db2', 'smooth')
     return signal
 
 # DCT code borrowed from following tutorial: https://inst.eecs.berkeley.edu/~ee123/sp16/Sections/JPEG_DCT_Demo.html

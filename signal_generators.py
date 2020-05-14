@@ -74,7 +74,7 @@ def generate_2D_smoothish_signal(dimensionality=512):
 
     return smoothish_image
 
-def load_bark_image():
+def load_image(path="textures/1.1.02.tiff"):
     bark_image = Image.open("textures/1.1.02.tiff")
 
     return np.array(bark_image)
