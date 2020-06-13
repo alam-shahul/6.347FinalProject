@@ -291,11 +291,11 @@ def sparse_compressed_sensing_for_2D_signals():
 
                 estimate = initial_estimate
                 for iteration in range(num_iterations): 
-                    gradient = (measurement_matrix.T @ ((measurement_matrix @ estimate.T.flatten().T) - measurement)).T.reshape(original_shape).T
+                    gradient = analysis((measurement_matrix.T @ ((measurement_matrix @ synthesis(estimate).T.flatten().T) - measurement)).T.reshape(original_shape).T)
 
                     gradient_step = step_size * gradient
 
-                    new_estimate = synthesis(pywt.threshold(analysis(estimate - gradient_step), step_size * sparsity_penalty))
+                    new_estimate = pywt.threshold(estimate - gradient_step, step_size * sparsity_penalty)
 
                     loss = np.linalg.norm(new_estimate - estimate, ord='fro') # loss is just l2 norm over all entries
 
@@ -308,7 +308,7 @@ def sparse_compressed_sensing_for_2D_signals():
             reconstruction_errors = np.zeros(len(num_measurement_choices))
             for index, num_measurements in enumerate(num_measurement_choices):
                 print("Number of measurements: %s" % num_measurements)
-                initial_estimate = np.random.normal(size=original_shape) # initial guess (just random analysis)
+                initial_estimate = analysis(np.random.normal(size=original_shape)) # initial guess (just random analysis)
                 
                 print("Generating random measurement matrix of shape (%s, %s) ..." % (num_measurements, dimensionality))
                 measurement_matrix = np.random.normal(size=(num_measurements, dimensionality))
@@ -322,7 +322,7 @@ def sparse_compressed_sensing_for_2D_signals():
 
                 reconstruction_errors[index] = reconstruction_error
 
-                reconstructed_signal = estimate
+                reconstructed_signal = synthesis(estimate)
                 reconstructed_image = Image.fromarray(reconstructed_signal.astype(np.uint8))
                 reconstructed_image.save("results/reconstructed_%s_signal_with_%s_analysis_and_%s_measurements.png" % (signal_type, analysis_type, num_measurements))
                 
